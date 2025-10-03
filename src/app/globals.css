@@ -24,3 +24,48 @@ body {
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
 }
+
+/* Leaflet and Marker Cluster Styles */
+.marker-cluster-small {
+	background-color: rgba(106, 90, 205, 0.6); /* slateblue with opacity */
+}
+.marker-cluster-small div {
+	background-color: rgba(106, 90, 205, 0.8);
+}
+
+.marker-cluster-medium {
+	background-color: rgba(75, 0, 130, 0.6); /* indigo with opacity */
+}
+.marker-cluster-medium div {
+	background-color: rgba(75, 0, 130, 0.8);
+}
+
+.marker-cluster-large {
+	background-color: rgba(25, 25, 112, 0.6); /* midnightblue with opacity */
+}
+.marker-cluster-large div {
+	background-color: rgba(25, 25, 112, 0.8);
+}
+
+.marker-cluster div {
+	width: 30px;
+	height: 30px;
+	margin-left: 5px;
+	margin-top: 5px;
+	color: #fff;
+	text-align: center;
+	border-radius: 50%;
+	font-size: 12px;
+	line-height: 30px;
+}
+
+/* Custom Icon Styling */
+.custom-leaflet-icon {
+  border: none;
+  background: transparent;
+}
+.icon-vehicle { color: #3b82f6; } /* blue-500 */
+.icon-generator { color: #f97316; } /* orange-500 */
+.icon-medical { color: #ef4444; } /* red-500 */
+.icon-shelter { color: #16a34a; } /* green-600 */
+.icon-other { color: #6b7280; } /* gray-500 */
