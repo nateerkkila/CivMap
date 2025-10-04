@@ -1,15 +1,17 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import dynamic from 'next/dynamic';
-import { FaCrosshairs, FaCheck, FaPlus, FaMap, FaList, FaSignOutAlt } from 'react-icons/fa';
+import { FaCheck, FaPlus, FaMap, FaList, FaSignOutAlt } from 'react-icons/fa';
 import MyResourcesList from '@/components/MyResourcesList';
 import ConfirmResourcesModal from '@/components/ConfirmResourcesModal';
-import { getCurrentUser, logout, getUserStats } from '@/lib/storage';
 import ScoreSystem from '@/components/ScoreSystem';
+import { useAuth } from '@/context/AuthContext';
+import { supabase } from '@/lib/supabaseClient';
 
+// Dynamically import the map component to ensure it's client-side only
 const ResourceMap = dynamic(() => import('@/components/ResourceMap'), {
   ssr: false,
   loading: () => <div className="flex items-center justify-center w-full h-full rounded-lg bg-gray-100"><p>Loading map...</p></div>,
@@ -23,43 +25,95 @@ export default function DashboardPage() {
   const [stats, setStats] = useState({
     peopleAdded: 0,
     resourcesAdded: 0,
-    updates: 0,
+    updates: 0, // Placeholder for future feature
     totalScore: 0
   });
+
+  const { user, loading: authLoading } = useAuth();
   const router = useRouter();
 
+  // --- Fetch user stats from Supabase ---
+  // useCallback prevents this function from being recreated on every render
+  const fetchStats = useCallback(async () => {
+    if (!user) return;
 
-  // --- Route Protection and Stats Loading ---
-  useEffect(() => {
-    const user = getCurrentUser();
-    if (!user) {
-      router.push('/login');
-      return;
+    try {
+      // Fetch resource count for the current user
+      const { count: resourceCount, error: resourceError } = await supabase
+        .from('item')
+        .select('*', { count: 'exact', head: true })
+        .eq('user_id', user.id);
+      if (resourceError) throw resourceError;
+
+      // Fetch referral count made by the current user
+      const { count: referralCount, error: referralError } = await supabase
+        .from('profiles')
+        .select('*', { count: 'exact', head: true })
+        .eq('referral_user_id', user.id);
+      if (referralError) throw referralError;
+
+      // Fetch total score from the user's profile
+      const { data: profileData, error: profileError } = await supabase
+        .from('profiles')
+        .select('total_score')
+        .eq('id', user.id)
+        .single();
+      if (profileError) throw profileError;
+
+      setStats({
+        resourcesAdded: resourceCount ?? 0,
+        peopleAdded: referralCount ?? 0,
+        updates: 0, // Still a placeholder
+        totalScore: profileData?.total_score ?? 0,
+      });
+
+    } catch (error) {
+      console.error("Error fetching user stats:", error);
     }
-    
-    // Load user stats
-    const userStats = getUserStats(user.id);
-    setStats(userStats);
-  }, [router]);
+  }, [user]);
 
-  const handleLogout = () => {
-    logout();
+  // --- Route Protection and Initial Data Load ---
+  useEffect(() => {
+    // If authentication is done and there's no user, redirect to login
+    if (!authLoading && !user) {
+      router.push('/login');
+    }
+    // If there is a user, fetch their stats
+    if (user) {
+      fetchStats();
+    }
+  }, [user, authLoading, router, fetchStats]);
+
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
     router.push('/login');
   };
   
-  const toggleView = () => setActiveView(prev => prev === 'resources' ? 'map' : 'resources');
-  
-  const handleConfirmResources = () => {
-    // Award points for confirming resources are up to date
-    const currentUser = getCurrentUser();
-    if (currentUser) {
-      // Add 5 points for confirming resources
-      // This would need to be implemented in storage.ts
-      console.log('Resources confirmed as up to date');
+  const handleConfirmResources = async () => {
+    if (!user) return;
+    
+    // A simple action to update a timestamp. Can be expanded with point rewards later.
+    const { error } = await supabase
+      .from('profiles')
+      .update({ last_confirmed_at: new Date().toISOString() })
+      .eq('id', user.id);
+      
+    if (error) {
+      console.error("Error confirming resources:", error);
+    } else {
+      console.log('User confirmed their resources are up to date.');
+      // You could potentially add points and refetch stats here
     }
     setShowConfirmModal(false);
   };
 
+  const toggleView = () => setActiveView(prev => prev === 'resources' ? 'map' : 'resources');
+
+  // Display a loading screen while checking authentication status
+  if (authLoading) {
+    return <div className="flex items-center justify-center h-screen bg-gray-50">Authenticating...</div>;
+  }
+  
   return (
     <div className="flex flex-col h-screen bg-gray-50">
       <header className="flex-shrink-0 bg-white shadow-sm z-10">
@@ -68,18 +122,17 @@ export default function DashboardPage() {
           <div className="flex items-center gap-2">
             <button 
               onClick={() => setShowConfirmModal(true)}
-              className="inline-flex items-center gap-2 px-4 py-3 text-s font-medium text-white bg-green-600 rounded-md shadow-sm hover:bg-green-700"
+              className="inline-flex items-center gap-2 px-3 py-2 text-xs font-medium text-white bg-green-600 rounded-md shadow-sm hover:bg-green-700"
             >
-              <FaCheck/> Confirm
+              <FaCheck/> Confirm Resources
             </button>
-            <Link href="/register-resource" className="inline-flex items-center gap-2 px-4 py-3 text-s font-medium text-white bg-blue-600 rounded-md shadow-sm hover:bg-blue-700">
+            <Link href="/register-resource" className="inline-flex items-center gap-2 px-3 py-2 text-xs font-medium text-white bg-blue-600 rounded-md shadow-sm hover:bg-blue-700">
               <FaPlus /> Add Resource
             </Link>
-            <button onClick={toggleView} className="inline-flex items-center gap-2 px-4 py-3 text-s font-medium text-gray-700 bg-white border border-gray-300 rounded-md shadow-sm hover:bg-gray-50">
+            <button onClick={toggleView} className="inline-flex items-center gap-2 px-3 py-2 text-xs font-medium text-gray-700 bg-white border border-gray-300 rounded-md shadow-sm hover:bg-gray-50">
               {activeView === 'resources' ? <><FaMap />Map View</> : <><FaList />Resource View</>}
             </button>
-            {/* --- Logout Button --- */}
-            <button onClick={handleLogout} title="Logout" className="inline-flex items-center justify-center w-12 h-12 text-xs font-medium text-gray-700 bg-white border border-gray-300 rounded-md shadow-sm hover:bg-gray-50">
+            <button onClick={handleLogout} title="Logout" className="inline-flex items-center justify-center w-8 h-8 text-xs font-medium text-gray-700 bg-white border border-gray-300 rounded-md shadow-sm hover:bg-gray-50">
               <FaSignOutAlt />
             </button>
           </div>
@@ -92,7 +145,6 @@ export default function DashboardPage() {
         </div>
       </main>
       
-      {/* Confirm Resources Modal */}
       <ConfirmResourcesModal
         isOpen={showConfirmModal}
         onClose={() => setShowConfirmModal(false)}
