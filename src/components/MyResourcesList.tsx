@@ -2,37 +2,35 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { getResourcesForUser, getCurrentUser } from '@/lib/storage';
-import { Resource, ResourceType } from '@/types';
-import { FaCar, FaBolt, FaFirstAid, FaHome, FaQuestionCircle } from 'react-icons/fa';
+import { useAuth } from '@/context/AuthContext';
+import { supabase } from '@/lib/supabaseClient';
+import { Item } from '@/types'; // Use our new Item type
+import { FaCar, FaBolt, FaFirstAid, FaHome, FaQuestionCircle, FaTruck, FaMedkit } from 'react-icons/fa';
 
-// Helper function to get an icon based on resource type
-const getResourceIcon = (type: ResourceType) => {
+// Updated helper to match new categories
+const getResourceIcon = (categoryName: string | undefined) => {
   const iconProps = { className: "w-8 h-8 text-white" };
-  switch (type) {
-    case 'Vehicle':
-      return <FaCar {...iconProps} />;
-    case 'Generator':
-      return <FaBolt {...iconProps} />;
-    case 'Medical Skill':
-      return <FaFirstAid {...iconProps} />;
-    case 'Shelter':
-      return <FaHome {...iconProps} />;
-    default:
-      return <FaQuestionCircle {...iconProps} />;
+  switch (categoryName) {
+    case 'Vehicle': return <FaCar {...iconProps} />;
+    case 'Energy': return <FaBolt {...iconProps} />;
+    case 'Medical': return <FaMedkit {...iconProps} />;
+    case 'Shelter': return <FaHome {...iconProps} />;
+    case 'Supply': return <FaTruck {...iconProps} />;
+    case 'Labour': return <FaFirstAid {...iconProps} />; // Example
+    default: return <FaQuestionCircle {...iconProps} />;
   }
 };
 
-// The individual card component
-const ResourceCard = ({ resource }: { resource: Resource }) => {
+// The individual card component, updated for the new Item type
+const ResourceCard = ({ item }: { item: Item }) => {
   const router = useRouter();
+  const handleCardClick = () => router.push(`/manage-resource/${item.id}`);
 
-  const handleCardClick = () => {
-    // Navigate to a dynamic route for managing this specific resource
-    router.push(`/manage-resource/${resource.id}`);
-  };
+  const categoryName = item.item_category?.name || 'Unknown';
+  const availability = item.attributes?.availability_percent ?? 0;
+  const isAvailable = availability > 0;
 
-  const iconBgColor = resource.status === 'Available' ? 'bg-green-500' : 'bg-gray-400';
+  const iconBgColor = isAvailable ? 'bg-green-500' : 'bg-gray-400';
 
   return (
     <div
@@ -40,50 +38,73 @@ const ResourceCard = ({ resource }: { resource: Resource }) => {
       className="flex items-center p-4 transition-shadow duration-300 bg-white border border-gray-200 rounded-lg shadow-sm cursor-pointer hover:shadow-md"
     >
       <div className={`flex items-center justify-center w-16 h-16 rounded-lg ${iconBgColor}`}>
-        {getResourceIcon(resource.type)}
+        {getResourceIcon(categoryName)}
       </div>
-      <div className="flex-1 ml-4">
-        <h3 className="font-bold text-gray-800 truncate">{resource.name}</h3>
-        <p className="text-sm text-gray-600">{resource.type}</p>
+      <div className="flex-1 ml-4 overflow-hidden">
+        <h3 className="font-bold text-gray-800 truncate">{item.general_description}</h3>
+        <p className="text-sm text-gray-600">{categoryName}</p>
         <span
           className={`inline-block px-2 py-0.5 mt-2 text-xs font-medium rounded-full ${
-            resource.status === 'Available'
+            isAvailable
               ? 'bg-green-100 text-green-800'
               : 'bg-gray-100 text-gray-800'
           }`}
         >
-          {resource.status}
+          {availability}% Available
         </span>
       </div>
     </div>
   );
 };
 
-// The main component that fetches and displays the list of cards
+// The main component, now fetching from Supabase
 export default function MyResourcesList() {
-  const [resources, setResources] = useState<Resource[]>([]);
+  const { user } = useAuth();
+  const [items, setItems] = useState<Item[]>([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const currentUser = getCurrentUser();
-    if (currentUser) {
-      // Fetch resources specifically for this user
-      setResources(getResourcesForUser(currentUser.id));
-    }
-  }, []);
+    const fetchItems = async () => {
+      if (!user) return;
+      setLoading(true);
 
-  if (resources.length === 0) {
+      const { data, error } = await supabase
+        .from('item')
+        .select(`
+          *,
+          item_category ( name )
+        `)
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: false });
+
+      if (error) {
+        console.error('Error fetching user resources:', error);
+      } else {
+        setItems(data as Item[]);
+      }
+      setLoading(false);
+    };
+
+    fetchItems();
+  }, [user]);
+
+  if (loading) {
+    return <div className="py-8 text-center text-gray-500">Loading your resources...</div>;
+  }
+
+  if (items.length === 0) {
     return (
       <div className="py-8 text-center text-gray-500 bg-gray-50 rounded-lg">
         <p>You have not registered any resources yet.</p>
-        <p className="mt-1 text-sm">Click "Register a Resource" to add your first one.</p>
+        <p className="mt-1 text-sm">Click "Add Resource" to get started.</p>
       </div>
     );
   }
 
   return (
     <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-      {resources.map((resource) => (
-        <ResourceCard key={resource.id} resource={resource} />
+      {items.map((item) => (
+        <ResourceCard key={item.id} item={item} />
       ))}
     </div>
   );

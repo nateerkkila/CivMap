@@ -11,7 +11,6 @@ import ScoreSystem from '@/components/ScoreSystem';
 import { useAuth } from '@/context/AuthContext';
 import { supabase } from '@/lib/supabaseClient';
 
-// Dynamically import the map component to ensure it's client-side only
 const ResourceMap = dynamic(() => import('@/components/ResourceMap'), {
   ssr: false,
   loading: () => <div className="flex items-center justify-center w-full h-full rounded-lg bg-gray-100"><p>Loading map...</p></div>,
@@ -25,18 +24,15 @@ export default function DashboardPage() {
   const [stats, setStats] = useState({
     peopleAdded: 0,
     resourcesAdded: 0,
-    updates: 0, // Placeholder for future feature
+    updates: 0,
     totalScore: 0
   });
-
   const { user, loading: authLoading } = useAuth();
   const router = useRouter();
 
-  // --- Fetch user stats from Supabase ---
-  // useCallback prevents this function from being recreated on every render
+  // --- THIS IS THE UPDATED FUNCTION REPLACING `getUserStats` ---
   const fetchStats = useCallback(async () => {
     if (!user) return;
-
     try {
       // Fetch resource count for the current user
       const { count: resourceCount, error: resourceError } = await supabase
@@ -52,7 +48,7 @@ export default function DashboardPage() {
         .eq('referral_user_id', user.id);
       if (referralError) throw referralError;
 
-      // Fetch total score from the user's profile
+      // Fetch total score directly from the user's profile
       const { data: profileData, error: profileError } = await supabase
         .from('profiles')
         .select('total_score')
@@ -63,7 +59,7 @@ export default function DashboardPage() {
       setStats({
         resourcesAdded: resourceCount ?? 0,
         peopleAdded: referralCount ?? 0,
-        updates: 0, // Still a placeholder
+        updates: 0, // This remains a placeholder
         totalScore: profileData?.total_score ?? 0,
       });
 
@@ -72,13 +68,10 @@ export default function DashboardPage() {
     }
   }, [user]);
 
-  // --- Route Protection and Initial Data Load ---
   useEffect(() => {
-    // If authentication is done and there's no user, redirect to login
     if (!authLoading && !user) {
       router.push('/login');
     }
-    // If there is a user, fetch their stats
     if (user) {
       fetchStats();
     }
@@ -91,8 +84,8 @@ export default function DashboardPage() {
   
   const handleConfirmResources = async () => {
     if (!user) return;
-    
-    // A simple action to update a timestamp. Can be expanded with point rewards later.
+    // Note: To add points here, you would call a Supabase Edge Function
+    // that securely updates the user's score. For now, we just update the timestamp.
     const { error } = await supabase
       .from('profiles')
       .update({ last_confirmed_at: new Date().toISOString() })
@@ -102,14 +95,12 @@ export default function DashboardPage() {
       console.error("Error confirming resources:", error);
     } else {
       console.log('User confirmed their resources are up to date.');
-      // You could potentially add points and refetch stats here
     }
     setShowConfirmModal(false);
   };
 
   const toggleView = () => setActiveView(prev => prev === 'resources' ? 'map' : 'resources');
 
-  // Display a loading screen while checking authentication status
   if (authLoading) {
     return <div className="flex items-center justify-center h-screen bg-gray-50">Authenticating...</div>;
   }

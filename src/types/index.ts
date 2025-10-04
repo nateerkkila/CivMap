@@ -1,3 +1,43 @@
+// Represents a row in our public.item_category table
+export interface ItemCategory {
+  id: number;
+  name: string;
+}
+
+// Represents the object we will send to Supabase to insert a new item.
+export interface ItemInsert {
+  user_id: string;
+  category_id: number;
+  general_description: string;
+  address?: string;
+  lat?: number;
+  lon?: number;
+  attributes?: Record<string, any>; // For flexible JSONB data
+}
+
+// Represents a fully-fetched Item from Supabase, including the category name.
+// This is what we will use most often in our components.
+export interface Item {
+  id: string; // UUID
+  user_id: string; // UUID
+  category_id: number;
+  general_description: string;
+  address: string | null;
+  lat: number | null;
+  lon: number | null;
+  attributes: {
+    capacity?: number;
+    vehicle_type?: string;
+    availability_percent?: number;
+    // Add other potential attributes here as needed
+  } | null;
+  created_at: string; // Timestamp
+  // This part comes from the joined item_category table
+  item_category: {
+    name: string;
+  } | null;
+}
+
 // A new type for our User model
 export interface User {
   id: string;
@@ -5,19 +45,4 @@ export interface User {
   referralUserId?: string;
   // In a real app, you would have a hashed password, not a plain one.
   // We'll omit it here since we are mocking auth.
-}
-
-export type ResourceType = 'Vehicle' | 'Generator' | 'Medical Skill' | 'Shelter' | 'Other';
-export type ResourceStatus = 'Available' | 'Not Available';
-
-export interface Resource {
-  id: string;
-  userId: string; // <-- Add the link to the user
-  type: ResourceType;
-  name: string;
-  capacity: number;
-  location: string;
-  latitude?: number;
-  longitude?: number;
-  status: ResourceStatus;
 }
