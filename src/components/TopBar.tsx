@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { FaCheck, FaPlus, FaMap, FaList, FaSignOutAlt } from 'react-icons/fa';
+import { FaCheck, FaPlus, FaMap, FaList, FaSignOutAlt, FaExclamationTriangle } from 'react-icons/fa';
 import { supabase } from '@/lib/supabaseClient';
 
 interface TopBarProps {
@@ -56,9 +56,20 @@ export default function TopBar({
             </button>
           )}
           {showAddResourceButton && (
-            <Link href="/register-resource" className="inline-flex items-center gap-2 px-3 py-2 text-xs font-medium text-white bg-blue-600 rounded-md shadow-sm hover:bg-blue-700">
-              <FaPlus /> Add Resource
-            </Link>
+            <>
+              <Link 
+                href="/report-threat"
+                className="inline-flex items-center gap-2 px-3 py-2 text-xs font-medium text-white bg-red-600 rounded-md shadow-sm hover:bg-red-700"
+              >
+                <FaExclamationTriangle /> Report Threat
+              </Link>
+              <Link 
+                href="/register-resource" 
+                className="inline-flex items-center gap-2 px-3 py-2 text-xs font-medium text-white bg-blue-600 rounded-md shadow-sm hover:bg-blue-700"
+              >
+                <FaPlus /> Add Resource
+              </Link>
+            </>
           )}
           <button onClick={onToggleView} className="inline-flex items-center gap-2 px-3 py-2 text-xs font-medium text-gray-700 bg-white border border-gray-300 rounded-md shadow-sm hover:bg-gray-50">
             {activeView === 'resources' ? <><FaMap />Map View</> : <><FaList />Resource View</>}
