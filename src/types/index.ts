@@ -51,3 +51,11 @@ export interface User {
   // In a real app, you would have a hashed password, not a plain one.
   // We'll omit it here since we are mocking auth.
 }
+
+export interface ThreatInsert {
+  user_id: string;
+  threat_type: string;
+  description?: string;
+  lat: number;
+  lon: number;
+}

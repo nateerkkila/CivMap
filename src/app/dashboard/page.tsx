@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import dynamic from 'next/dynamic';
-import { FaCheck, FaPlus, FaMap, FaList, FaSignOutAlt } from 'react-icons/fa';
+import { FaCheck, FaExclamationTriangle ,FaPlus, FaMap, FaList, FaSignOutAlt } from 'react-icons/fa';
 import MyResourcesList from '@/components/MyResourcesList';
 import ConfirmResourcesModal from '@/components/ConfirmResourcesModal';
 import ScoreSystem from '@/components/ScoreSystem';
@@ -111,6 +111,12 @@ export default function DashboardPage() {
         <div className="flex items-center justify-between max-w-7xl px-4 py-3 mx-auto sm:px-6 lg:px-8">
           <h1 className="text-xl font-bold leading-6 text-gray-900">CivMap Dashboard</h1>
           <div className="flex items-center gap-2">
+            <Link 
+              href="/report-threat"
+              className="inline-flex items-center gap-2 px-3 py-2 text-xs font-medium text-white bg-red-600 rounded-md shadow-sm hover:bg-red-700"
+            >
+            <FaExclamationTriangle /> Report Threat
+        </Link>
             <button 
               onClick={() => setShowConfirmModal(true)}
               className="inline-flex items-center gap-2 px-3 py-2 text-xs font-medium text-white bg-green-600 rounded-md shadow-sm hover:bg-green-700"
