@@ -7,6 +7,7 @@ import dynamic from 'next/dynamic';
 import { FaCrosshairs, FaPlus, FaMap, FaList, FaSignOutAlt } from 'react-icons/fa';
 import MyResourcesList from '@/components/MyResourcesList';
 import { getCurrentUser, logout } from '@/lib/storage';
+import ScoreSystem from '@/components/ScoreSystem';
 
 const ResourceMap = dynamic(() => import('@/components/ResourceMap'), {
   ssr: false,
@@ -18,6 +19,15 @@ type View = 'resources' | 'map';
 export default function DashboardPage() {
   const [activeView, setActiveView] = useState<View>('resources');
   const router = useRouter();
+
+  // Mock data - will be replaced with real data later
+  const stats = {
+    peopleAdded: 12,
+    resourcesAdded: 8,
+    updates: 15,
+    totalScore: 35
+  };
+
 
   // --- Route Protection ---
   useEffect(() => {
@@ -54,6 +64,7 @@ export default function DashboardPage() {
         </div>
       </header>
       <main className="flex-1 overflow-y-auto">
+         <ScoreSystem stats={stats} />
         <div className="max-w-7xl mx-auto sm:px-6 lg:px-8 py-6 h-full">
           {activeView === 'resources' ? <MyResourcesList /> : <div className="w-full h-full rounded-lg overflow-hidden shadow-md"><ResourceMap /></div>}
         </div>
