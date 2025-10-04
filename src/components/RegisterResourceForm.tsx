@@ -118,6 +118,28 @@ export default function RegisterResourceForm() {
     try {
       const { error: insertError } = await supabase.from('item').insert([newItem]);
       if (insertError) throw insertError;
+      
+      // Update user's total score (5 points per resource)
+      const { data: currentProfile, error: fetchError } = await supabase
+        .from('profiles')
+        .select('total_score')
+        .eq('id', user.id)
+        .single();
+      
+      if (!fetchError && currentProfile) {
+        const { error: scoreError } = await supabase
+          .from('profiles')
+          .update({ 
+            total_score: (currentProfile.total_score || 0) + 5
+          })
+          .eq('id', user.id);
+        
+        if (scoreError) {
+          console.error('Error updating score:', scoreError);
+          // Don't throw here - resource was saved successfully
+        }
+      }
+      
       setSubmitted(true);
       setTimeout(() => router.push('/dashboard'), 2000);
     // --- FIX: Type 'err' as 'unknown' and check its type ---

@@ -79,6 +79,25 @@ export default function CivilPage({ onSecurityLevelRefresh }: CivilPageProps) {
       fetchStats();
     }
   }, [user, authLoading, router, fetchStats]);
+
+  // Refresh stats when user returns to the page (e.g., after adding a resource)
+  useEffect(() => {
+    const handleFocus = () => {
+      if (user) {
+        fetchStats();
+      }
+    };
+
+    window.addEventListener('focus', handleFocus);
+    return () => window.removeEventListener('focus', handleFocus);
+  }, [user, fetchStats]);
+
+  // Refresh stats when component mounts (e.g., when navigating back from register resource)
+  useEffect(() => {
+    if (user) {
+      fetchStats();
+    }
+  }, [user, fetchStats]);
   
   const handleConfirmResources = async () => {
     if (!user) return;
