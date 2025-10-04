@@ -6,7 +6,7 @@ import Link from 'next/link';
 import dynamic from 'next/dynamic';
 import { useAuth } from '@/context/AuthContext';
 import { supabase } from '@/lib/supabaseClient';
-import { ItemCategory, ItemInsert } from '@/types';
+import { ItemCategory, ItemInsert, ItemAttributes } from '@/types'; // Using the specific ItemAttributes type is better
 
 const MapPicker = dynamic(() => import('@/components/MapPicker'), {
   ssr: false,
@@ -41,6 +41,8 @@ export default function RegisterResourceForm() {
   const [townArea, setTownArea] = useState('');
   const [sharePreciseLocation, setSharePreciseLocation] = useState(false);
   const [coords, setCoords] = useState<{ lat: number; lng: number } | null>(null);
+
+  const [imageFile, setImageFile] = useState<File | null>(null);
 
   // UI State
   const [error, setError] = useState('');
@@ -77,9 +79,33 @@ export default function RegisterResourceForm() {
     setSubmitting(true);
     setError('');
 
-    const attributes: Record<string, string | number | boolean | null> = { 
+    let imageUrl: string | undefined = undefined;
+
+    if (imageFile) {
+      const filePath = `public/${user.id}/${Date.now()}-${imageFile.name}`;
+      const { error: uploadError } = await supabase
+        .storage
+        .from('resource_images')
+        .upload(filePath, imageFile);
+
+      if (uploadError) {
+        setError(`Image upload failed: ${uploadError.message}`);
+        setSubmitting(false);
+        return;
+      }
+      
+      const { data: { publicUrl } } = supabase
+        .storage
+        .from('resource_images')
+        .getPublicUrl(filePath);
+      
+      imageUrl = publicUrl;
+    }
+
+    const attributes: ItemAttributes = { 
         availability_percent: availability 
     };
+     
     let generalDesc = description;
 
     switch (selectedCategoryName) {
@@ -103,6 +129,12 @@ export default function RegisterResourceForm() {
         attributes.skill_level = skillLevel;
         generalDesc = description || `Labour Skill: ${skillLevel}`;
         break;
+    }
+
+    // --- THIS IS THE FIX ---
+    // Only assign the image_url if it's not undefined.
+    if (imageUrl) {
+        attributes.image_url = imageUrl;
     }
 
     const newItem: ItemInsert = {
@@ -142,7 +174,6 @@ export default function RegisterResourceForm() {
       
       setSubmitted(true);
       setTimeout(() => router.push('/dashboard'), 2000);
-    // --- FIX: Type 'err' as 'unknown' and check its type ---
     } catch (err: unknown) {
         if (err instanceof Error) {
             setError(err.message);
@@ -150,7 +181,10 @@ export default function RegisterResourceForm() {
             setError("Failed to save the resource.");
         }
     } finally {
-      setSubmitting(false);
+      // We don't set submitting to false on success, as we redirect away
+      if (error) {
+          setSubmitting(false);
+      }
     }
   };
 
@@ -163,7 +197,6 @@ export default function RegisterResourceForm() {
     );
   }
 
-  // --- Helper to render the dynamic fields ---
   const renderDynamicFields = () => {
     switch (selectedCategoryName) {
       case 'Vehicle':
@@ -224,7 +257,7 @@ export default function RegisterResourceForm() {
         return (
           <div>
             <label htmlFor="description" className="block text-sm font-medium text-gray-700">Description</label>
-            <input id="description" type="text" value={description} onChange={(e) => setDescription(e.target.value)} required className="block w-full px-3 py-2 mt-1 border text-gray-700 border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm" />
+            <input id="description" type="text" value={description} onChange={(e) => setDescription(e.target.value)} required className="block w-full px-3 py-2 mt-1 text-gray-700 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm" />
           </div>
         );
     }
@@ -246,7 +279,17 @@ export default function RegisterResourceForm() {
           </div>
           
           {renderDynamicFields()}
-
+          
+          <div>
+            <label htmlFor="image" className="block text-sm font-medium text-gray-700">Attach an Image (Optional)</label>
+            <input 
+              id="image" 
+              type="file"
+              accept="image/png, image/jpeg"
+              onChange={(e) => setImageFile(e.target.files ? e.target.files[0] : null)}
+              className="block w-full text-sm text-gray-500 mt-1 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100"
+            />
+          </div>
           <div>
             <label htmlFor="availability" className="block text-sm font-medium text-gray-700">Availability</label>
             <input id="availability" type="range" min="0" max="100" step="1" value={availability} onChange={(e) => setAvailability(Number(e.target.value))} className="w-full h-2 mt-2 bg-gray-200 rounded-lg appearance-none cursor-pointer" />

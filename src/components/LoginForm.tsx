@@ -10,6 +10,7 @@ export default function LoginForm() {
   const [password, setPassword] = useState('');
   const [username, setUsername] = useState('');
   const [error, setError] = useState('');
+  const [message, setMessage] = useState(''); // <-- State for success messages
   const [loading, setLoading] = useState(false);
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -19,13 +20,14 @@ export default function LoginForm() {
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setError('');
+    setMessage('');
     setLoading(true);
 
     try {
       if (isLoginView) {
         const { error } = await supabase.auth.signInWithPassword({ email, password });
         if (error) throw error;
-        router.push('/dashboard');
+        // The middleware will handle redirecting to the dashboard after refresh
         router.refresh();
       } else {
         const { error } = await supabase.auth.signUp({
@@ -39,11 +41,13 @@ export default function LoginForm() {
           },
         });
         if (error) throw error;
-        router.push('/dashboard');
-        router.refresh();
+        // --- THIS IS THE FIX ---
+        // Instead of redirecting, show a success message.
+        setMessage('Sign up successful! Please check your email to verify your account.');
       }
     } catch (err: unknown) {
       if (err instanceof Error) {
+        // Supabase often puts user-friendly messages in `err.message`
         setError(err.message);
       } else {
         setError('An unexpected error occurred.');
@@ -57,6 +61,8 @@ export default function LoginForm() {
     <>
       <form onSubmit={handleSubmit} className="space-y-6">
         {error && <div className="p-3 text-sm text-red-700 bg-red-100 rounded-md" role="alert">{error}</div>}
+        {message && <div className="p-3 text-sm text-green-700 bg-green-100 rounded-md" role="alert">{message}</div>}
+        
         <div className="relative rounded-md shadow-sm -space-y-px">
           {!isLoginView && (
             <input id="username" name="username" type="text" required className="relative block w-full px-3 py-2 text-gray-900 placeholder-gray-500 border border-gray-300 rounded-none appearance-none rounded-t-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm" placeholder="Username" value={username} onChange={(e) => setUsername(e.target.value)} />
@@ -69,7 +75,7 @@ export default function LoginForm() {
         </button>
       </form>
       <div className="mt-4 text-sm text-center">
-        <button onClick={() => setIsLoginView(!isLoginView)} className="font-medium text-indigo-600 hover:text-indigo-500">
+        <button onClick={() => { setIsLoginView(!isLoginView); setError(''); setMessage(''); }} className="font-medium text-indigo-600 hover:text-indigo-500">
           {isLoginView ? 'Need an account? Sign Up' : 'Already have an account? Sign In'}
         </button>
       </div>
