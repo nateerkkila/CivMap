@@ -4,8 +4,10 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import dynamic from 'next/dynamic';
 import AllResourcesList from '@/components/AllResourcesList';
+import ResourceFilter from '@/components/ResourceFilter';
 import TopBar from '@/components/TopBar';
 import { useAuth } from '@/context/AuthContext';
+import { supabase } from '@/lib/supabaseClient';
 
 const ResourceMap = dynamic(() => import('@/components/ResourceMap'), {
   ssr: false,
@@ -14,14 +16,46 @@ const ResourceMap = dynamic(() => import('@/components/ResourceMap'), {
 
 type View = 'resources' | 'map';
 
+interface FilterState {
+  category: string;
+  distance: string;
+  maxDistance: number;
+}
+
 interface AuthorityPageProps {
   onSecurityLevelRefresh?: () => void;
 }
 
 export default function AuthorityPage({ onSecurityLevelRefresh }: AuthorityPageProps) {
   const [activeView, setActiveView] = useState<View>('resources');
+  const [categories, setCategories] = useState<{ id: number; name: string }[]>([]);
+  const [filters, setFilters] = useState<FilterState>({
+    category: '',
+    distance: '',
+    maxDistance: 50
+  });
+  const [currentLocation, setCurrentLocation] = useState<{ lat: number; lng: number } | null>(null);
+  const [locationError, setLocationError] = useState<string>('');
   const { user, loading: authLoading } = useAuth();
   const router = useRouter();
+
+  // Fetch categories
+  useEffect(() => {
+    const fetchCategories = async () => {
+      const { data, error } = await supabase
+        .from('item_category')
+        .select('id, name')
+        .order('name');
+
+      if (error) {
+        console.error('Error fetching categories:', error);
+      } else {
+        setCategories(data || []);
+      }
+    };
+
+    fetchCategories();
+  }, []);
 
   useEffect(() => {
     if (!authLoading && !user) {
@@ -47,7 +81,26 @@ export default function AuthorityPage({ onSecurityLevelRefresh }: AuthorityPageP
       />
       <main className="flex-1 overflow-y-auto">
         <div className="max-w-7xl mx-auto sm:px-6 lg:px-8 py-6 h-full">
-          {activeView === 'resources' ? <AllResourcesList /> : <div className="w-full h-full rounded-lg overflow-hidden shadow-md"><ResourceMap /></div>}
+          {activeView === 'resources' ? (
+            <AllResourcesList />
+          ) : (
+            <div className="h-full flex flex-col">
+              <div className="mb-4">
+                <ResourceFilter
+                  categories={categories}
+                  filters={filters}
+                  onFiltersChange={setFilters}
+                  onLocationChange={setCurrentLocation}
+                  onLocationError={setLocationError}
+                  currentLocation={currentLocation}
+                  locationError={locationError}
+                />
+              </div>
+              <div className="flex-1 rounded-lg overflow-hidden shadow-md">
+                <ResourceMap filters={filters} currentLocation={currentLocation} />
+              </div>
+            </div>
+          )}
         </div>
       </main>
     </div>

@@ -13,10 +13,29 @@ import { getIconForResourceType } from './icons';
 import { FaLocationArrow } from 'react-icons/fa';
 import ResourceDetailPanel from './ResourceDetailPanel';
 
-export default function ResourceMap() {
+interface FilterState {
+  category: string;
+  distance: string;
+  maxDistance: number;
+}
+
+interface ResourceMapProps {
+  filters?: FilterState;
+  currentLocation?: { lat: number; lng: number } | null;
+}
+
+export default function ResourceMap({ filters, currentLocation }: ResourceMapProps = {}) {
   const [items, setItems] = useState<Item[]>([]);
+  const [allItems, setAllItems] = useState<Item[]>([]);
   const [selectedItem, setSelectedItem] = useState<Item | null>(null);
   const mapRef = useRef<L.Map | null>(null);
+
+  // Initialize items when allItems first loads
+  useEffect(() => {
+    if (allItems.length > 0 && items.length === 0) {
+      setItems(allItems);
+    }
+  }, [allItems, items.length]);
 
   useEffect(() => {
     const fetchAllItems = async () => {
@@ -39,11 +58,66 @@ export default function ResourceMap() {
           downvotes: 0,
           comment_count: 0,
         }));
-        setItems(itemsWithCounts as Item[]);
+        setAllItems(itemsWithCounts as Item[]);
+        // Don't set items here - let the filtering effect handle it
       }
     };
     fetchAllItems();
   }, []);
+
+  // Function to calculate distance between two coordinates using Haversine formula
+  const calculateDistance = (lat1: number, lon1: number, lat2: number, lon2: number): number => {
+    const R = 6371; // Radius of the Earth in kilometers
+    const dLat = (lat2 - lat1) * Math.PI / 180;
+    const dLon = (lon2 - lon1) * Math.PI / 180;
+    const a = 
+      Math.sin(dLat/2) * Math.sin(dLat/2) +
+      Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * 
+      Math.sin(dLon/2) * Math.sin(dLon/2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+    const distance = R * c; // Distance in kilometers
+    return distance;
+  };
+
+  // Apply filters when filters, allItems, or currentLocation change
+  useEffect(() => {
+    if (!filters || !filters.category && !filters.distance) {
+      // No filters applied - show all items
+      setItems(allItems);
+      return;
+    }
+
+    let filteredItems = [...allItems];
+
+    // Filter by category
+    if (filters.category) {
+      filteredItems = filteredItems.filter(item => 
+        item.item_category?.name === filters.category
+      );
+    }
+
+    // Filter by distance
+    if (filters.distance && currentLocation) {
+      filteredItems = filteredItems.filter(item => {
+        if (!item.lat || !item.lon) return false; // Skip items without coordinates
+        const distance = calculateDistance(
+          currentLocation.lat,
+          currentLocation.lng,
+          item.lat,
+          item.lon
+        );
+        return distance <= filters.maxDistance;
+      });
+    }
+
+    console.log('Filtering applied:', {
+      allItemsCount: allItems.length,
+      filteredItemsCount: filteredItems.length,
+      filters,
+      currentLocation
+    });
+    setItems(filteredItems);
+  }, [filters, allItems, currentLocation]);
   
   // --- NEW LOGIC for closing the panel when clicking on the map ---
   useEffect(() => {
@@ -62,6 +136,8 @@ export default function ResourceMap() {
   const validItems = items.filter(
     (item) => typeof item.lat === 'number' && typeof item.lon === 'number'
   );
+
+  console.log('Map render - items count:', items.length, 'validItems count:', validItems.length);
 
   // --- UPDATED LOGIC to toggle the panel on marker clicks ---
   const handleMarkerClick = (item: Item) => {
@@ -96,7 +172,10 @@ export default function ResourceMap() {
           attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>'
           url="https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png"
         />
-        <MarkerClusterGroup chunkedLoading>
+        <MarkerClusterGroup 
+          key={`cluster-${validItems.length}`} 
+          chunkedLoading
+        >
           {validItems.map((item) => (
             <Marker
               key={item.id}
