@@ -77,7 +77,9 @@ export default function RegisterResourceForm() {
     setSubmitting(true);
     setError('');
 
-    let attributes: Record<string, any> = { availability_percent: availability };
+    const attributes: Record<string, string | number | boolean | null> = { 
+        availability_percent: availability 
+    };
     let generalDesc = description;
 
     switch (selectedCategoryName) {
@@ -118,8 +120,13 @@ export default function RegisterResourceForm() {
       if (insertError) throw insertError;
       setSubmitted(true);
       setTimeout(() => router.push('/dashboard'), 2000);
-    } catch (err: any) {
-      setError(err.message || "Failed to save the resource.");
+    // --- FIX: Type 'err' as 'unknown' and check its type ---
+    } catch (err: unknown) {
+        if (err instanceof Error) {
+            setError(err.message);
+        } else {
+            setError("Failed to save the resource.");
+        }
     } finally {
       setSubmitting(false);
     }

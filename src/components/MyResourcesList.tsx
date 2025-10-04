@@ -4,10 +4,9 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
 import { supabase } from '@/lib/supabaseClient';
-import { Item } from '@/types'; // Use our new Item type
+import { Item } from '@/types';
 import { FaCar, FaBolt, FaFirstAid, FaHome, FaQuestionCircle, FaTruck, FaMedkit } from 'react-icons/fa';
 
-// Updated helper to match new categories
 const getResourceIcon = (categoryName: string | undefined) => {
   const iconProps = { className: "w-8 h-8 text-white" };
   switch (categoryName) {
@@ -16,17 +15,17 @@ const getResourceIcon = (categoryName: string | undefined) => {
     case 'Medical': return <FaMedkit {...iconProps} />;
     case 'Shelter': return <FaHome {...iconProps} />;
     case 'Supply': return <FaTruck {...iconProps} />;
-    case 'Labour': return <FaFirstAid {...iconProps} />; // Example
+    case 'Labour': return <FaFirstAid {...iconProps} />;
     default: return <FaQuestionCircle {...iconProps} />;
   }
 };
 
-// The individual card component, updated for the new Item type
 const ResourceCard = ({ item }: { item: Item }) => {
   const router = useRouter();
   const handleCardClick = () => router.push(`/manage-resource/${item.id}`);
 
   const categoryName = item.item_category?.name || 'Unknown';
+  // With the new type, TypeScript knows availability_percent is a number or undefined.
   const availability = item.attributes?.availability_percent ?? 0;
   const isAvailable = availability > 0;
 
@@ -57,7 +56,6 @@ const ResourceCard = ({ item }: { item: Item }) => {
   );
 };
 
-// The main component, now fetching from Supabase
 export default function MyResourcesList() {
   const { user } = useAuth();
   const [items, setItems] = useState<Item[]>([]);
@@ -67,13 +65,9 @@ export default function MyResourcesList() {
     const fetchItems = async () => {
       if (!user) return;
       setLoading(true);
-
       const { data, error } = await supabase
         .from('item')
-        .select(`
-          *,
-          item_category ( name )
-        `)
+        .select(`*, item_category ( name )`)
         .eq('user_id', user.id)
         .order('created_at', { ascending: false });
 
@@ -96,7 +90,7 @@ export default function MyResourcesList() {
     return (
       <div className="py-8 text-center text-gray-500 bg-gray-50 rounded-lg">
         <p>You have not registered any resources yet.</p>
-        <p className="mt-1 text-sm">Click "Add Resource" to get started.</p>
+        <p className="mt-1 text-sm">Click <strong>Add Resource</strong> to get started.</p>
       </div>
     );
   }

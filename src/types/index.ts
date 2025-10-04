@@ -1,10 +1,21 @@
-// Represents a row in our public.item_category table
 export interface ItemCategory {
   id: number;
   name: string;
 }
 
-// Represents the object we will send to Supabase to insert a new item.
+// A more specific interface for our JSONB attributes.
+// We define known numeric keys and allow for other dynamic string keys.
+export interface ItemAttributes {
+  // Known numeric properties
+  availability_percent?: number;
+  capacity?: number;
+  capacity_kw?: number;
+  quantity?: number;
+
+  // Allows for other, unknown properties to exist (e.g., vehicle_type, fuel_type)
+  [key: string]: string | number | boolean | null | undefined;
+}
+
 export interface ItemInsert {
   user_id: string;
   category_id: number;
@@ -12,27 +23,21 @@ export interface ItemInsert {
   address?: string;
   lat?: number;
   lon?: number;
-  attributes?: Record<string, any>; // For flexible JSONB data
+  // Use our more specific type for insertions as well
+  attributes?: ItemAttributes;
 }
 
-// Represents a fully-fetched Item from Supabase, including the category name.
-// This is what we will use most often in our components.
 export interface Item {
-  id: string; // UUID
-  user_id: string; // UUID
+  id: string;
+  user_id: string;
   category_id: number;
   general_description: string;
   address: string | null;
   lat: number | null;
   lon: number | null;
-  attributes: {
-    capacity?: number;
-    vehicle_type?: string;
-    availability_percent?: number;
-    // Add other potential attributes here as needed
-  } | null;
-  created_at: string; // Timestamp
-  // This part comes from the joined item_category table
+  // Use the specific attributes type here
+  attributes: ItemAttributes | null;
+  created_at: string;
   item_category: {
     name: string;
   } | null;
