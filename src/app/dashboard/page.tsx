@@ -86,8 +86,8 @@ export default function DashboardPage() {
         </div>
       </header>
       <main className="flex-1 overflow-y-auto">
-         <ScoreSystem stats={stats} />
         <div className="max-w-7xl mx-auto sm:px-6 lg:px-8 py-6 h-full">
+           <ScoreSystem stats={stats} />
           {activeView === 'resources' ? <MyResourcesList /> : <div className="w-full h-full rounded-lg overflow-hidden shadow-md"><ResourceMap /></div>}
         </div>
       </main>
