@@ -20,9 +20,15 @@ export default function ResourceMap() {
 
   useEffect(() => {
     const fetchAllItems = async () => {
+      // --- THE KEY CHANGE IS HERE: "profiles(*)" ---
+      // This tells Supabase to fetch all columns from the related profiles table.
       const { data, error } = await supabase
         .from('item')
-        .select(`*, item_category ( name ), profiles ( username )`);
+        .select(`
+          *,
+          item_category ( name ),
+          profiles ( * )
+        `);
 
       if (error) {
         console.error("Error fetching items for map:", error);

@@ -39,6 +39,16 @@ export interface ItemInsert {
   attributes?: ItemAttributes;
 }
 
+export interface Profile {
+  id: string; // UUID
+  username: string;
+  profession: string | null;
+  availability_notes: string | null;
+  reliability_score: number | null;
+  registered_address: string | null;
+  phone: string | null;
+}
+
 export interface Item {
   id: string; // UUID
   user_id: string; // UUID
@@ -50,9 +60,9 @@ export interface Item {
   created_at: string; // Timestamp
   // Joined Data
   item_category: { name: string; } | null;
-  // We will now join the profile to get the username directly
-  profiles: { username: string; } | null;
-  // We will calculate these counts with Supabase
+  // We now join the entire profile object
+  profiles: Profile | null;
+  // Vote/comment counts
   upvotes: number;
   downvotes: number;
   comment_count: number;
