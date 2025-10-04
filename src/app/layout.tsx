@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import { Inter } from 'next/font/google';
 import './globals.css';
+import { AuthProvider } from '@/context/AuthContext'; // Import the provider
 
 const inter = Inter({ subsets: ['latin'] });
 
@@ -17,7 +18,10 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={inter.className}>
-        <div className="min-h-screen bg-gray-100">{children}</div>
+        {/* Wrap the entire app in the AuthProvider */}
+        <AuthProvider>
+          <div className="min-h-screen bg-gray-100">{children}</div>
+        </AuthProvider>
       </body>
     </html>
   );

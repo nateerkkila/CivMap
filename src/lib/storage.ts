@@ -1,4 +1,4 @@
-import { Resource, User } from "@/types";
+import { User } from "@/types";
 
 const USERS_KEY = 'civilian_users';
 const RESOURCES_KEY = 'civilian_resources';
@@ -78,36 +78,36 @@ export function logout(): void {
 /**
  * Saves a new resource to localStorage.
  */
-export function saveResource(resource: Resource): void {
-  if (typeof window === 'undefined') return;
-  const allResources = localStorage.getItem(RESOURCES_KEY);
-  const resources = allResources ? JSON.parse(allResources) : [];
-  resources.push(resource);
-  localStorage.setItem(RESOURCES_KEY, JSON.stringify(resources));
-}
+// export function saveResource(resource: Resource): void {
+//   if (typeof window === 'undefined') return;
+//   const allResources = localStorage.getItem(RESOURCES_KEY);
+//   const resources = allResources ? JSON.parse(allResources) : [];
+//   resources.push(resource);
+//   localStorage.setItem(RESOURCES_KEY, JSON.stringify(resources));
+// }
 
 /**
  * Retrieves ALL resources from localStorage, regardless of user.
  * This is for the global map view.
  */
-export function getAllResources(): Resource[] {
-  if (typeof window === 'undefined') return [];
-  const resourcesStr = localStorage.getItem(RESOURCES_KEY);
-  return resourcesStr ? JSON.parse(resourcesStr) : [];
-}
+// export function getAllResources(): Resource[] {
+//   if (typeof window === 'undefined') return [];
+//   const resourcesStr = localStorage.getItem(RESOURCES_KEY);
+//   return resourcesStr ? JSON.parse(resourcesStr) : [];
+// }
 
 
 /**
  * Retrieves resources *only for a specific user* from localStorage.
  */
-export function getResourcesForUser(userId: string): Resource[] {
-  if (typeof window === 'undefined') return [];
-  const allResources = localStorage.getItem(RESOURCES_KEY);
-  if (!allResources) return [];
-  const resources: Resource[] = JSON.parse(allResources);
-  // This is the key filtering logic
-  return resources.filter(resource => resource.userId === userId);
-}
+// export function getResourcesForUser(userId: string): Resource[] {
+//   if (typeof window === 'undefined') return [];
+//   const allResources = localStorage.getItem(RESOURCES_KEY);
+//   if (!allResources) return [];
+//   const resources: Resource[] = JSON.parse(allResources);
+//   // This is the key filtering logic
+//   return resources.filter(resource => resource.userId === userId);
+// }
 
 // --- REFERRAL MANAGEMENT ---
 
@@ -147,19 +147,19 @@ export function getReferralsByUser(userId: string): any[] {
 /**
  * Gets user statistics including referral count
  */
-export function getUserStats(userId: string) {
-  const resources = getResourcesForUser(userId);
-  const referrals = getReferralsByUser(userId);
+// export function getUserStats(userId: string) {
+//   const resources = getResourcesForUser(userId);
+//   const referrals = getReferralsByUser(userId);
   
-  // Calculate points: 5 points per resource, 10 points per referral
-  const resourcePoints = resources.length * 5;
-  const referralPoints = referrals.length * 10;
-  const totalScore = resourcePoints + referralPoints;
+//   // Calculate points: 5 points per resource, 10 points per referral
+//   const resourcePoints = resources.length * 5;
+//   const referralPoints = referrals.length * 10;
+//   const totalScore = resourcePoints + referralPoints;
   
-  return {
-    resourcesAdded: resources.length,
-    peopleAdded: referrals.length,
-    updates: 0, // Placeholder for future feature
-    totalScore
-  };
-}
+//   return {
+//     resourcesAdded: resources.length,
+//     peopleAdded: referrals.length,
+//     updates: 0, // Placeholder for future feature
+//     totalScore
+//   };
+// }

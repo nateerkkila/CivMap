@@ -59,13 +59,14 @@ body {
 	line-height: 30px;
 }
 
-/* Custom Icon Styling */
 .custom-leaflet-icon {
   border: none;
   background: transparent;
 }
 .icon-vehicle { color: #3b82f6; } /* blue-500 */
-.icon-generator { color: #f97316; } /* orange-500 */
+.icon-energy { color: #f97316; } /* orange-500 */
+.icon-labour { color: #a855f7; } /* purple-500 */
+.icon-supply { color: #eab308; } /* yellow-500 */
 .icon-medical { color: #ef4444; } /* red-500 */
 .icon-shelter { color: #16a34a; } /* green-600 */
 .icon-other { color: #6b7280; } /* gray-500 */
