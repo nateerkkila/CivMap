@@ -6,7 +6,7 @@ import Link from 'next/link';
 import dynamic from 'next/dynamic';
 import { FaCrosshairs, FaPlus, FaMap, FaList, FaSignOutAlt } from 'react-icons/fa';
 import MyResourcesList from '@/components/MyResourcesList';
-import { getCurrentUser, logout } from '@/lib/storage';
+import { getCurrentUser, logout, getUserStats } from '@/lib/storage';
 import ScoreSystem from '@/components/ScoreSystem';
 
 const ResourceMap = dynamic(() => import('@/components/ResourceMap'), {
@@ -18,23 +18,26 @@ type View = 'resources' | 'map';
 
 export default function DashboardPage() {
   const [activeView, setActiveView] = useState<View>('resources');
+  const [stats, setStats] = useState({
+    peopleAdded: 0,
+    resourcesAdded: 0,
+    updates: 0,
+    totalScore: 0
+  });
   const router = useRouter();
 
-  // Mock data - will be replaced with real data later
-  const stats = {
-    peopleAdded: 12,
-    resourcesAdded: 8,
-    updates: 15,
-    totalScore: 35
-  };
 
-
-  // --- Route Protection ---
+  // --- Route Protection and Stats Loading ---
   useEffect(() => {
     const user = getCurrentUser();
     if (!user) {
       router.push('/login');
+      return;
     }
+    
+    // Load user stats
+    const userStats = getUserStats(user.id);
+    setStats(userStats);
   }, [router]);
 
   const handleLogout = () => {
