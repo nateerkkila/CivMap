@@ -4,6 +4,18 @@ export interface ItemCategory {
   name: string;
 }
 
+// Represents user profile data from the profiles table
+export interface UserProfile {
+  id: string;
+  username: string;
+  total_score: number;
+  security_level: number;
+  referral_user_id?: string;
+  last_confirmed_at?: string;
+  created_at: string;
+  updated_at: string;
+}
+
 // Represents the object we will send to Supabase to insert a new item.
 export interface ItemInsert {
   user_id: string;
