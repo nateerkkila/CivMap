@@ -77,7 +77,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       
       // --- FIX #2: This fixes the redirect after a successful login/logout ---
       if (event === 'SIGNED_IN' || event === 'SIGNED_OUT') {
-        router.refresh();
+        router.push("/dashboard");
       }
     });
 
