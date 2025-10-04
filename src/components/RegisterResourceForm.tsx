@@ -77,7 +77,9 @@ export default function RegisterResourceForm() {
     setSubmitting(true);
     setError('');
 
-    let attributes: Record<string, any> = { availability_percent: availability };
+    const attributes: Record<string, string | number | boolean | null> = { 
+        availability_percent: availability 
+    };
     let generalDesc = description;
 
     switch (selectedCategoryName) {
@@ -118,8 +120,13 @@ export default function RegisterResourceForm() {
       if (insertError) throw insertError;
       setSubmitted(true);
       setTimeout(() => router.push('/dashboard'), 2000);
-    } catch (err: any) {
-      setError(err.message || "Failed to save the resource.");
+    // --- FIX: Type 'err' as 'unknown' and check its type ---
+    } catch (err: unknown) {
+        if (err instanceof Error) {
+            setError(err.message);
+        } else {
+            setError("Failed to save the resource.");
+        }
     } finally {
       setSubmitting(false);
     }
@@ -156,11 +163,11 @@ export default function RegisterResourceForm() {
           <>
             <div>
               <label htmlFor="capacity" className="block text-sm font-medium text-gray-700">Capacity (kW)</label>
-              <input id="capacity" type="number" value={capacity} onChange={(e) => setCapacity(Number(e.target.value))} required min="0" className="block w-full px-3 py-2 mt-1 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm" />
+              <input id="capacity" type="number" value={capacity} onChange={(e) => setCapacity(Number(e.target.value))} required min="0" className="text-gray-700 block w-full px-3 py-2 mt-1 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm" />
             </div>
             <div>
               <label htmlFor="fuelType" className="block text-sm font-medium text-gray-700">Fuel Type</label>
-              <input id="fuelType" type="text" value={fuelType} onChange={(e) => setFuelType(e.target.value)} required placeholder="e.g., Gasoline, Diesel, Propane" className="block w-full px-3 py-2 mt-1 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm placeholder-gray-500" />
+              <input id="fuelType" type="text" value={fuelType} onChange={(e) => setFuelType(e.target.value)} required placeholder="e.g., Gasoline, Diesel, Propane" className="text-gray-700 block w-full px-3 py-2 mt-1 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm placeholder-gray-500" />
             </div>
           </>
         );

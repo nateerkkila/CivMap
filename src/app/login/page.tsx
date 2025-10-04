@@ -1,4 +1,18 @@
 import LoginForm from '@/components/LoginForm';
+import { Suspense } from 'react'; // <-- 1. Import Suspense
+
+// A simple component to show while the main form is loading
+function LoginFormSkeleton() {
+  return (
+    <div className="space-y-6">
+      <div className="space-y-2">
+        <div className="h-10 w-full rounded-md bg-gray-200 animate-pulse"></div>
+        <div className="h-10 w-full rounded-md bg-gray-200 animate-pulse"></div>
+      </div>
+      <div className="h-10 w-full rounded-md bg-gray-300 animate-pulse"></div>
+    </div>
+  );
+}
 
 export default function LoginPage() {
   return (
@@ -9,12 +23,16 @@ export default function LoginPage() {
             Civilian Resource Map
           </h1>
           <p className="mt-2 text-gray-600">
-            {/* You can add a subtitle here if you like */}
             Sign in or create an account to continue
           </p>
         </div>
-        {/* The LoginForm component is rendered inside this styled container */}
-        <LoginForm />
+        
+        {/* --- THIS IS THE FIX --- */}
+        {/* 2. Wrap LoginForm in a Suspense boundary with a fallback UI */}
+        <Suspense fallback={<LoginFormSkeleton />}>
+          <LoginForm />
+        </Suspense>
+
       </div>
     </main>
   );
