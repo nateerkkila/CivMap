@@ -28,19 +28,22 @@ export interface ItemInsert {
 }
 
 export interface Item {
-  id: string;
-  user_id: string;
-  category_id: number;
+  id: string; // UUID
+  user_id: string; // UUID
   general_description: string;
   address: string | null;
   lat: number | null;
   lon: number | null;
-  // Use the specific attributes type here
   attributes: ItemAttributes | null;
-  created_at: string;
-  item_category: {
-    name: string;
-  } | null;
+  created_at: string; // Timestamp
+  // Joined Data
+  item_category: { name: string; } | null;
+  // We will now join the profile to get the username directly
+  profiles: { username: string; } | null;
+  // We will calculate these counts with Supabase
+  upvotes: number;
+  downvotes: number;
+  comment_count: number;
 }
 
 // A new type for our User model

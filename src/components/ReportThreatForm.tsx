@@ -13,7 +13,17 @@ const MapPicker = dynamic(() => import('@/components/MapPicker'), {
   loading: () => <div className="flex items-center justify-center h-[300px] bg-gray-100 rounded-md"><p>Loading map...</p></div>,
 });
 
-const threatTypes = ['Suspicious Activity', 'Drone', 'Roadblock', 'Hazard', 'Other'];
+const threatTypes = [
+  'Drone',
+  'Aircraft',
+  'Hostile Vehicle',
+  'Struck/Shelled Location',
+  'Building Collapse',
+  'Blockade',
+  'Minefield',
+  'Suspicious Activity',
+  'Other'
+];
 
 export default function ReportThreatForm() {
   const router = useRouter();
