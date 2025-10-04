@@ -1,20 +1,19 @@
 'use client';
 
-import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import { createContext, useContext, useState, useEffect, ReactNode, useCallback } from 'react';
+import { useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabaseClient';
 import { Session, User } from '@supabase/supabase-js';
-import { UserProfile } from '@/types';
+import { Profile } from '@/types'; // Assuming your Profile type is defined in /types
 
-// Define the shape of the context value
 interface AuthContextType {
   session: Session | null;
   user: User | null;
-  profile: UserProfile | null;
+  profile: Profile | null;
   loading: boolean;
   refreshProfile: () => Promise<void>;
 }
 
-// Create the context
 const AuthContext = createContext<AuthContextType>({ 
   session: null, 
   user: null, 
@@ -23,51 +22,52 @@ const AuthContext = createContext<AuthContextType>({
   refreshProfile: async () => {} 
 });
 
-// Create the provider component
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [session, setSession] = useState<Session | null>(null);
   const [user, setUser] = useState<User | null>(null);
-  const [profile, setProfile] = useState<UserProfile | null>(null);
+  const [profile, setProfile] = useState<Profile | null>(null);
   const [loading, setLoading] = useState(true);
+  const router = useRouter();
 
-  // Function to fetch user profile
-  const fetchUserProfile = async (userId: string) => {
+  const fetchUserProfile = useCallback(async (userId: string) => {
     try {
-      const { data: profileData, error } = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('id', userId)
-        .single();
-      
+      const { data, error } = await supabase.from('profiles').select('*').eq('id', userId).single();
       if (error) {
         console.error('Error fetching user profile:', error);
         return null;
-      } else {
-        return profileData;
       }
+      return data as Profile | null;
     } catch (error) {
       console.error('Error fetching user profile:', error);
       return null;
     }
-  };
+  }, []);
 
-  // Function to refresh profile (can be called externally)
-  const refreshProfile = async () => {
+  const refreshProfile = useCallback(async () => {
     if (user) {
       const profileData = await fetchUserProfile(user.id);
       setProfile(profileData);
-      if (profileData) {
-        console.log(`Profile refreshed - Security level: ${profileData.security_level}`);
-      }
     }
-  };
+  }, [user, fetchUserProfile]);
 
   useEffect(() => {
+    // --- FIX #1: This fixes the "hanging on authenticating" on page refresh ---
+    const getInitialSession = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      setSession(session);
+      setUser(session?.user ?? null);
+      if (session?.user) {
+        const profileData = await fetchUserProfile(session.user.id);
+        setProfile(profileData);
+      }
+      setLoading(false); // This guarantees loading is set to false.
+    };
+    getInitialSession();
+
+    // Set up the listener for real-time auth changes (login, logout)
     const { data: authListener } = supabase.auth.onAuthStateChange(async (event, session) => {
       setSession(session);
       setUser(session?.user ?? null);
-      
-      // Fetch user profile if user is logged in
       if (session?.user) {
         const profileData = await fetchUserProfile(session.user.id);
         setProfile(profileData);
@@ -75,27 +75,23 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setProfile(null);
       }
       
-      setLoading(false);
+      // --- FIX #2: This fixes the redirect after a successful login/logout ---
+      if (event === 'SIGNED_IN' || event === 'SIGNED_OUT') {
+        router.refresh();
+      }
     });
 
-    // Clean up the listener on component unmount
     return () => {
       authListener.subscription.unsubscribe();
     };
-  }, []);
+  }, [router, fetchUserProfile]);
 
-  const value = {
-    session,
-    user,
-    profile,
-    loading,
-    refreshProfile,
-  };
+  const value = { session, user, profile, loading, refreshProfile };
 
+  // This prevents the "black screen" by always rendering the provider frame
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }
 
-// Create a custom hook for easy access to the context
 export function useAuth() {
   return useContext(AuthContext);
 }
