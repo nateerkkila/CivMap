@@ -1,51 +1,61 @@
+'use client';
+
+import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { FaPlus, FaList, FaMap } from 'react-icons/fa';
+import dynamic from 'next/dynamic';
+import { FaCrosshairs, FaPlus, FaMap, FaList, FaSignOutAlt } from 'react-icons/fa';
+import MyResourcesList from '@/components/MyResourcesList';
+import { getCurrentUser, logout } from '@/lib/storage';
+
+const ResourceMap = dynamic(() => import('@/components/ResourceMap'), {
+  ssr: false,
+  loading: () => <div className="flex items-center justify-center w-full h-full rounded-lg bg-gray-100"><p>Loading map...</p></div>,
+});
+
+type View = 'resources' | 'map';
 
 export default function DashboardPage() {
+  const [activeView, setActiveView] = useState<View>('resources');
+  const router = useRouter();
+
+  // --- Route Protection ---
+  useEffect(() => {
+    const user = getCurrentUser();
+    if (!user) {
+      router.push('/login');
+    }
+  }, [router]);
+
+  const handleLogout = () => {
+    logout();
+    router.push('/login');
+  };
+  
+  const toggleView = () => setActiveView(prev => prev === 'resources' ? 'map' : 'resources');
+
   return (
-    <div className="min-h-screen bg-gray-50">
-      <header className="bg-white shadow-sm">
-        <div className="max-w-4xl px-4 py-4 mx-auto sm:px-6 lg:px-8">
-          <h1 className="text-2xl font-bold leading-6 text-gray-900">
-            Dashboard
-          </h1>
+    <div className="flex flex-col h-screen bg-gray-50">
+      <header className="flex-shrink-0 bg-white shadow-sm z-10">
+        <div className="flex items-center justify-between max-w-7xl px-4 py-3 mx-auto sm:px-6 lg:px-8">
+          <h1 className="text-xl font-bold leading-6 text-gray-900">CivMap Dashboard</h1>
+          <div className="flex items-center gap-2">
+            <Link href="/register-resource" className="inline-flex items-center gap-2 px-4 py-3 text-s font-medium text-white bg-blue-600 rounded-md shadow-sm hover:bg-blue-700">
+              <FaPlus /> Add Resource
+            </Link>
+            <button onClick={toggleView} className="inline-flex items-center gap-2 px-4 py-3 text-s font-medium text-gray-700 bg-white border border-gray-300 rounded-md shadow-sm hover:bg-gray-50">
+              {activeView === 'resources' ? <><FaMap />Map View</> : <><FaList />Resource View</>}
+            </button>
+            {/* --- Logout Button --- */}
+            <button onClick={handleLogout} title="Logout" className="inline-flex items-center justify-center w-12 h-12 text-xs font-medium text-gray-700 bg-white border border-gray-300 rounded-md shadow-sm hover:bg-gray-50">
+              <FaSignOutAlt />
+            </button>
+          </div>
         </div>
       </header>
-
-      <main className="max-w-4xl p-4 mx-auto mt-8 sm:px-6 lg:px-8">
-        <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
-          {/* Register a Resource Card */}
-          <Link href="/register-resource">
-            <div className="p-6 text-center text-gray-700 transition-shadow duration-300 bg-white border rounded-lg shadow-md cursor-pointer hover:shadow-lg">
-              <FaPlus className="w-12 h-12 mx-auto text-indigo-600" />
-              <h3 className="mt-4 text-lg font-medium">Register a Resource</h3>
-              <p className="mt-2 text-sm text-gray-500">
-                Add a new vehicle, shelter, skill, or other resource.
-              </p>
-            </div>
-          </Link>
-
-          {/* My Resources Card */}
-          <Link href="/my-resources">
-            <div className="p-6 text-center text-gray-700 transition-shadow duration-300 bg-white border rounded-lg shadow-md cursor-pointer hover:shadow-lg">
-              <FaList className="w-12 h-12 mx-auto text-indigo-600" />
-              <h3 className="mt-4 text-lg font-medium">My Resources</h3>
-              <p className="mt-2 text-sm text-gray-500">
-                View, edit, or delete your registered resources.
-              </p>
-            </div>
-          </Link>
-
-          {/* Map View Card */}
-          <Link href="/map-view"> {/* Placeholder link */}
-            <div className="p-6 text-center text-gray-700 transition-shadow duration-300 bg-white border rounded-lg shadow-md cursor-pointer hover:shadow-lg">
-              <FaMap className="w-12 h-12 mx-auto text-indigo-600" />
-              <h3 className="mt-4 text-lg font-medium">Map View</h3>
-              <p className="mt-2 text-sm text-gray-500">
-                See all registered resources on an interactive map.
-              </p>
-            </div>
-          </Link>
+      <main className="flex-1 overflow-y-auto">
+        <div className="max-w-7xl mx-auto sm:px-6 lg:px-8 py-6 h-full">
+          {activeView === 'resources' ? <MyResourcesList /> : <div className="w-full h-full rounded-lg overflow-hidden shadow-md"><ResourceMap /></div>}
         </div>
       </main>
     </div>
