@@ -4,7 +4,7 @@ export interface ItemCategory {
 }
 
 // Represents user profile data from the profiles table
-export interface UserProfile {
+export interface Profile {
   id: string;
   username: string;
   total_score: number;
@@ -14,6 +14,8 @@ export interface UserProfile {
   created_at: string;
   updated_at: string;
 }
+
+export type UserProfile = Profile
 
 // A more specific interface for our JSONB attributes.
 // We define known numeric keys and allow for other dynamic string keys.
