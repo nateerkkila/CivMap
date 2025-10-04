@@ -24,6 +24,8 @@ interface CivilPageProps {
 export default function CivilPage({ onSecurityLevelRefresh }: CivilPageProps) {
   const [activeView, setActiveView] = useState<View>('resources');
   const [showConfirmModal, setShowConfirmModal] = useState(false);
+  const [canConfirm, setCanConfirm] = useState(true);
+  const [lastConfirmedDate, setLastConfirmedDate] = useState<string | null>(null);
   const [stats, setStats] = useState({
     peopleAdded: 0,
     resourcesAdded: 0,
@@ -51,20 +53,43 @@ export default function CivilPage({ onSecurityLevelRefresh }: CivilPageProps) {
         .eq('referral_user_id', user.id);
       if (referralError) throw referralError;
 
-      // Fetch total score directly from the user's profile
+      // Fetch total score, updates, and confirmation status from the user's profile
       const { data: profileData, error: profileError } = await supabase
         .from('profiles')
-        .select('total_score')
+        .select('total_score, updates, last_confirmed_at')
         .eq('id', user.id)
         .single();
-      if (profileError) throw profileError;
+      
+      if (profileError) {
+        console.error("Profile fetch error:", profileError);
+        throw profileError;
+      }
+      
+      console.log("Profile data:", profileData); // Debug log
 
+      // Check if user can confirm today
+      let canConfirmToday = true;
+      if (profileData.last_confirmed_at) {
+        const lastConfirmed = new Date(profileData.last_confirmed_at);
+        const today = new Date();
+        canConfirmToday = lastConfirmed.toDateString() !== today.toDateString();
+      }
+
+      setCanConfirm(canConfirmToday);
+      setLastConfirmedDate(profileData.last_confirmed_at);
       setStats({
         resourcesAdded: resourceCount ?? 0,
         peopleAdded: referralCount ?? 0,
-        updates: 0, // This remains a placeholder
+        updates: profileData?.updates ?? 0, // Will be 0 if field doesn't exist
         totalScore: profileData?.total_score ?? 0,
       });
+      
+      console.log("Final stats:", {
+        resourcesAdded: resourceCount ?? 0,
+        peopleAdded: referralCount ?? 0,
+        updates: profileData?.updates ?? 0,
+        totalScore: profileData?.total_score ?? 0,
+      }); // Debug log
 
     } catch (error) {
       console.error("Error fetching user stats:", error);
@@ -101,18 +126,54 @@ export default function CivilPage({ onSecurityLevelRefresh }: CivilPageProps) {
   
   const handleConfirmResources = async () => {
     if (!user) return;
-    // Note: To add points here, you would call a Supabase Edge Function
-    // that securely updates the user's score. For now, we just update the timestamp.
-    const { error } = await supabase
-      .from('profiles')
-      .update({ last_confirmed_at: new Date().toISOString() })
-      .eq('id', user.id);
+    
+    try {
+      // Check if user can confirm (not already confirmed today)
+      const { data: profileData, error: fetchError } = await supabase
+        .from('profiles')
+        .select('last_confirmed_at, total_score, updates')
+        .eq('id', user.id)
+        .single();
       
-    if (error) {
-      console.error("Error confirming resources:", error);
-    } else {
-      console.log('User confirmed their resources are up to date.');
+      if (fetchError) {
+        console.error("Error fetching profile:", fetchError);
+        return;
+      }
+      
+      // Check if already confirmed today
+      if (profileData.last_confirmed_at) {
+        const lastConfirmed = new Date(profileData.last_confirmed_at);
+        const today = new Date();
+        const isSameDay = lastConfirmed.toDateString() === today.toDateString();
+        
+        if (isSameDay) {
+          console.log('User already confirmed today');
+          setShowConfirmModal(false);
+          return;
+        }
+      }
+      
+      // Update profile with new confirmation, increment updates and score
+      const { error: updateError } = await supabase
+        .from('profiles')
+        .update({ 
+          last_confirmed_at: new Date().toISOString(),
+          total_score: (profileData.total_score || 0) + 3, // 3 points for daily confirmation
+          updates: (profileData.updates || 0) + 1
+        })
+        .eq('id', user.id);
+      
+      if (updateError) {
+        console.error("Error confirming resources:", updateError);
+      } else {
+        console.log('User confirmed their resources are up to date.');
+        // Refresh stats to show updated values
+        fetchStats();
+      }
+    } catch (error) {
+      console.error("Error in handleConfirmResources:", error);
     }
+    
     setShowConfirmModal(false);
   };
 
@@ -143,6 +204,8 @@ export default function CivilPage({ onSecurityLevelRefresh }: CivilPageProps) {
         isOpen={showConfirmModal}
         onClose={() => setShowConfirmModal(false)}
         onConfirm={handleConfirmResources}
+        canConfirm={canConfirm}
+        lastConfirmedDate={lastConfirmedDate || undefined}
       />
     </div>
   );
