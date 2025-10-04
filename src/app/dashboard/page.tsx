@@ -6,6 +6,7 @@ import Link from 'next/link';
 import dynamic from 'next/dynamic';
 import { FaCrosshairs, FaPlus, FaMap, FaList, FaSignOutAlt } from 'react-icons/fa';
 import MyResourcesList from '@/components/MyResourcesList';
+import ConfirmResourcesModal from '@/components/ConfirmResourcesModal';
 import { getCurrentUser, logout, getUserStats } from '@/lib/storage';
 import ScoreSystem from '@/components/ScoreSystem';
 
@@ -18,6 +19,7 @@ type View = 'resources' | 'map';
 
 export default function DashboardPage() {
   const [activeView, setActiveView] = useState<View>('resources');
+  const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [stats, setStats] = useState({
     peopleAdded: 0,
     resourcesAdded: 0,
@@ -46,6 +48,17 @@ export default function DashboardPage() {
   };
   
   const toggleView = () => setActiveView(prev => prev === 'resources' ? 'map' : 'resources');
+  
+  const handleConfirmResources = () => {
+    // Award points for confirming resources are up to date
+    const currentUser = getCurrentUser();
+    if (currentUser) {
+      // Add 5 points for confirming resources
+      // This would need to be implemented in storage.ts
+      console.log('Resources confirmed as up to date');
+    }
+    setShowConfirmModal(false);
+  };
 
   return (
     <div className="flex flex-col h-screen bg-gray-50">
@@ -53,6 +66,12 @@ export default function DashboardPage() {
         <div className="flex items-center justify-between max-w-7xl px-4 py-3 mx-auto sm:px-6 lg:px-8">
           <h1 className="text-xl font-bold leading-6 text-gray-900">CivMap Dashboard</h1>
           <div className="flex items-center gap-2">
+            <button 
+              onClick={() => setShowConfirmModal(true)}
+              className="inline-flex items-center gap-2 px-4 py-3 text-s font-medium text-white bg-green-600 rounded-md shadow-sm hover:bg-green-700"
+            >
+              <FaCheck/> Confirm
+            </button>
             <Link href="/register-resource" className="inline-flex items-center gap-2 px-4 py-3 text-s font-medium text-white bg-blue-600 rounded-md shadow-sm hover:bg-blue-700">
               <FaPlus /> Add Resource
             </Link>
@@ -72,6 +91,13 @@ export default function DashboardPage() {
           {activeView === 'resources' ? <MyResourcesList /> : <div className="w-full h-full rounded-lg overflow-hidden shadow-md"><ResourceMap /></div>}
         </div>
       </main>
+      
+      {/* Confirm Resources Modal */}
+      <ConfirmResourcesModal
+        isOpen={showConfirmModal}
+        onClose={() => setShowConfirmModal(false)}
+        onConfirm={handleConfirmResources}
+      />
     </div>
   );
 }
