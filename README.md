@@ -10,6 +10,8 @@ A platform for mapping and mobilizing civilian resources to enhance comprehensiv
 
 ### [**https://civ-map.vercel.app**](https://civ-map.vercel.app) 👈
 
+**PLEASE NOTE:** If you experience issues with 'loading' or 'authenticating', please try directly using /login and /dashboard URLS. During the app if experience loading issues, try refreshing.
+
 ---
 
 ## The Concept: Kokonaisturvallisuus (Comprehensive Security)
