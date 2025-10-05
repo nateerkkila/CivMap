@@ -1,4 +1,4 @@
-'use client'; // <-- ADD THIS LINE AT THE VERY TOP
+'use client';
 
 import dynamic from 'next/dynamic';
 import Link from 'next/link';
