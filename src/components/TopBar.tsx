@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { FaCheck, FaPlus, FaMap, FaList, FaSignOutAlt, FaExclamationTriangle, FaShieldAlt } from 'react-icons/fa';
 import { supabase } from '@/lib/supabaseClient';
+import { Profile } from '@/types';
 
 type View = 'resources' | 'map' | 'threats';
 
@@ -14,6 +15,7 @@ interface TopBarProps {
   onSecurityLevelRefresh?: () => void;
   showConfirmButton?: boolean;
   showAddResourceButton?: boolean;
+  profile: Profile | null;
 }
 
 export default function TopBar({ 
@@ -22,7 +24,8 @@ export default function TopBar({
   onShowConfirmModal,
   onSecurityLevelRefresh,
   showConfirmButton = true,
-  showAddResourceButton = true
+  showAddResourceButton = true,
+  profile
 }: TopBarProps) {
   const router = useRouter();
   const handleLogout = async () => { await supabase.auth.signOut(); router.push('/login'); };
@@ -41,8 +44,7 @@ export default function TopBar({
           CivMap Dashboard
         </h1>
         <div className="flex items-center gap-2">
-          {/* --- THIS SECTION IS FIXED --- */}
-          {/* Added full, correct classNames to the action buttons */}
+          
           {showConfirmButton && (
             <button 
               onClick={onShowConfirmModal}
@@ -67,16 +69,25 @@ export default function TopBar({
               </Link>
             </>
           )}
-          {/* --- END OF FIX --- */}
 
-          {/* View Toggles */}
+          {/* View Toggles with Conditional Logic */}
           <div className="flex items-center p-1 bg-gray-100 rounded-lg ml-4">
             <button onClick={() => onSetView('resources')} className={getButtonClass('resources')}><FaList /> Resources</button>
-            <button onClick={() => onSetView('threats')} className={getButtonClass('threats')}><FaShieldAlt /> Threats</button>
+            
+            {profile && profile.security_level >= 10 && (
+              <button onClick={() => onSetView('threats')} className={getButtonClass('threats')}>
+                <FaShieldAlt /> Threats
+              </button>
+            )}
+            
             <button onClick={() => onSetView('map')} className={getButtonClass('map')}><FaMap /> Map</button>
           </div>
 
-          <button onClick={handleLogout} title="Logout" className="ml-2 inline-flex items-center justify-center w-8 h-8 text-xs font-medium text-gray-700 bg-white border border-gray-300 rounded-md shadow-sm hover:bg-gray-50">
+          <button 
+            onClick={handleLogout} 
+            title="Logout" 
+            className="ml-2 inline-flex items-center justify-center w-8 h-8 text-xs font-medium text-gray-700 bg-white border border-gray-300 rounded-md shadow-sm hover:bg-gray-50"
+          >
             <FaSignOutAlt />
           </button>
         </div>

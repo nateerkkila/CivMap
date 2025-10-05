@@ -33,7 +33,7 @@ export default function CivilPage({ onSecurityLevelRefresh }: CivilPageProps) {
     updates: 0,
     totalScore: 0
   });
-  const { user, loading: authLoading } = useAuth();
+  const { user, profile, loading: authLoading } = useAuth();
   const router = useRouter();
 
   // --- (All data fetching logic like fetchStats and handleConfirmResources remains unchanged) ---
@@ -73,6 +73,7 @@ export default function CivilPage({ onSecurityLevelRefresh }: CivilPageProps) {
         onSecurityLevelRefresh={onSecurityLevelRefresh}
         showConfirmButton={true}
         showAddResourceButton={true}
+        profile={profile}
       />
       <main className="flex-1 overflow-y-auto">
         <div className="max-w-7xl mx-auto sm:px-6 lg:px-8 py-6 h-full">
