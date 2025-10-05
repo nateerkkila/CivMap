@@ -34,18 +34,6 @@ CivMap features a role-based system to serve both civilians and authorities.
 *   **Threat Assessment:** View a dedicated list of all reported threats, sorted by the most recent.
 *   **Centralized Map View:** Visualize all assets and threats on a single, interactive map with clustering for easy navigation.
 
-## 📸 Screenshots
-
-*(We recommend adding a GIF of the app in action here!)*
-
-| Civilian Dashboard | Authority Dashboard |
-| :---: | :---: |
-| *(Your Screenshot Here)* | *(Your Screenshot Here)* |
-
-| Map View with Threats | Resource Registration |
-| :---: | :---: |
-| *(Your Screenshot Here)* | *(Your Screenshot Here)* |
-
 
 ## 🛠️ Tech Stack
 
@@ -83,6 +71,77 @@ To get a local copy up and running, follow these simple steps.
     npm run dev
     ```
     Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+
+Note: If you need to create the supabase tables, the schema is here:
+
+-- WARNING: This schema is for context only and is not meant to be run.
+-- Table order and constraints may not be valid for execution.
+
+CREATE TABLE public.comments (
+  id uuid NOT NULL DEFAULT gen_random_uuid(),
+  item_id uuid NOT NULL,
+  user_id uuid NOT NULL,
+  content text NOT NULL CHECK (char_length(content) > 0),
+  created_at timestamp with time zone NOT NULL DEFAULT now(),
+  CONSTRAINT comments_pkey PRIMARY KEY (id),
+  CONSTRAINT comments_item_id_fkey FOREIGN KEY (item_id) REFERENCES public.item(id),
+  CONSTRAINT comments_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.profiles(id)
+);
+CREATE TABLE public.item (
+  id uuid NOT NULL DEFAULT gen_random_uuid(),
+  user_id uuid NOT NULL,
+  category_id bigint NOT NULL,
+  general_description text NOT NULL,
+  address text,
+  lat numeric,
+  lon numeric,
+  attributes jsonb,
+  created_at timestamp with time zone NOT NULL DEFAULT now(),
+  CONSTRAINT item_pkey PRIMARY KEY (id),
+  CONSTRAINT item_category_id_fkey FOREIGN KEY (category_id) REFERENCES public.item_category(id),
+  CONSTRAINT item_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.profiles(id)
+);
+CREATE TABLE public.item_category (
+  id bigint GENERATED ALWAYS AS IDENTITY NOT NULL,
+  name text NOT NULL UNIQUE,
+  CONSTRAINT item_category_pkey PRIMARY KEY (id)
+);
+CREATE TABLE public.profiles (
+  id uuid NOT NULL,
+  username text NOT NULL UNIQUE CHECK (char_length(username) >= 3),
+  referral_user_id uuid,
+  total_score integer NOT NULL DEFAULT 0,
+  last_confirmed_at timestamp with time zone,
+  security_level bigint DEFAULT '0'::bigint,
+  profession text,
+  availability_notes text,
+  reliability_score numeric DEFAULT 100.00,
+  registered_address text,
+  phone text,
+  updates bigint DEFAULT '0'::bigint,
+  CONSTRAINT profiles_pkey PRIMARY KEY (id),
+  CONSTRAINT profiles_id_fkey FOREIGN KEY (id) REFERENCES auth.users(id),
+  CONSTRAINT profiles_referral_user_id_fkey FOREIGN KEY (referral_user_id) REFERENCES auth.users(id)
+);
+CREATE TABLE public.threats (
+  id uuid NOT NULL DEFAULT gen_random_uuid(),
+  user_id uuid NOT NULL,
+  threat_type text NOT NULL,
+  description text,
+  lat numeric NOT NULL,
+  lon numeric NOT NULL,
+  created_at timestamp with time zone NOT NULL DEFAULT now(),
+  CONSTRAINT threats_pkey PRIMARY KEY (id),
+  CONSTRAINT threats_user_id_fkey FOREIGN KEY (user_id) REFERENCES auth.users(id)
+);
+CREATE TABLE public.votes (
+  item_id uuid NOT NULL,
+  user_id uuid NOT NULL,
+  direction smallint NOT NULL CHECK (direction = ANY (ARRAY['-1'::integer, 1])),
+  CONSTRAINT votes_pkey PRIMARY KEY (item_id, user_id),
+  CONSTRAINT votes_item_id_fkey FOREIGN KEY (item_id) REFERENCES public.item(id),
+  CONSTRAINT votes_user_id_fkey FOREIGN KEY (user_id) REFERENCES auth.users(id)
+);
 
 ## 💡 Future Ideas
 
