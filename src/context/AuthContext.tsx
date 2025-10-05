@@ -4,7 +4,7 @@ import { createContext, useContext, useState, useEffect, ReactNode, useCallback 
 import { useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabaseClient';
 import { Session, User } from '@supabase/supabase-js';
-import { Profile } from '@/types'; // Assuming your Profile type is defined in /types
+import { Profile } from '@/types';
 
 interface AuthContextType {
   session: Session | null;
@@ -51,7 +51,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [user, fetchUserProfile]);
 
   useEffect(() => {
-    // --- FIX #1: This fixes the "hanging on authenticating" on page refresh ---
     const getInitialSession = async () => {
       const { data: { session } } = await supabase.auth.getSession();
       setSession(session);
@@ -60,11 +59,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         const profileData = await fetchUserProfile(session.user.id);
         setProfile(profileData);
       }
-      setLoading(false); // This guarantees loading is set to false.
+      setLoading(false);
     };
     getInitialSession();
 
-    // Set up the listener for real-time auth changes (login, logout)
     const { data: authListener } = supabase.auth.onAuthStateChange(async (event, session) => {
       setSession(session);
       setUser(session?.user ?? null);
@@ -75,9 +73,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setProfile(null);
       }
       
-      // --- FIX #2: This fixes the redirect after a successful login/logout ---
-      if (event === 'SIGNED_IN' || event === 'SIGNED_OUT') {
+      if (event === 'SIGNED_IN') {
         router.push("/dashboard");
+      } else if (event === 'SIGNED_OUT') {
+        router.push("/login");
       }
     });
 
