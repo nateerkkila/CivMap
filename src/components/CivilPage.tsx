@@ -36,12 +36,95 @@ export default function CivilPage({ onSecurityLevelRefresh }: CivilPageProps) {
   const { user, loading: authLoading } = useAuth();
   const router = useRouter();
 
-  // --- (All data fetching logic like fetchStats and handleConfirmResources remains unchanged) ---
-  const fetchStats = useCallback(async () => { /* ... no changes here ... */ }, [user]);
-  useEffect(() => { /* ... no changes here ... */ }, [user, authLoading, router, fetchStats]);
-  useEffect(() => { /* ... no changes here ... */ }, [user, fetchStats]);
-  useEffect(() => { /* ... no changes here ... */ }, [user, fetchStats]);
-  const handleConfirmResources = async () => { /* ... no changes here ... */ };
+  // Fetch user statistics
+  const fetchStats = useCallback(async () => {
+    if (!user) return;
+    
+    try {
+      // Get user's profile for total score
+      const { data: profile, error: profileError } = await supabase
+        .from('profiles')
+        .select('total_score')
+        .eq('id', user.id)
+        .single();
+
+      if (profileError) {
+        console.error('Error fetching profile:', profileError);
+        return;
+      }
+
+      // Count user's resources
+      const { count: resourcesCount, error: resourcesError } = await supabase
+        .from('item')
+        .select('*', { count: 'exact', head: true })
+        .eq('user_id', user.id);
+
+      if (resourcesError) {
+        console.error('Error counting resources:', resourcesError);
+        return;
+      }
+
+      // For now, set peopleAdded and updates to 0 since we don't have those features yet
+      setStats({
+        peopleAdded: 0,
+        resourcesAdded: resourcesCount || 0,
+        updates: 0,
+        totalScore: profile?.total_score || 0
+      });
+    } catch (error) {
+      console.error('Error fetching stats:', error);
+    }
+  }, [user]);
+
+  // Fetch stats when user changes
+  useEffect(() => {
+    if (user && !authLoading) {
+      fetchStats();
+    }
+  }, [user, authLoading, fetchStats]);
+
+  // Redirect if not authenticated
+  useEffect(() => {
+    if (!authLoading && !user) {
+      router.push('/login');
+    }
+  }, [user, authLoading, router]);
+
+  // Refresh stats when component mounts
+  useEffect(() => {
+    if (user) {
+      fetchStats();
+    }
+  }, [user, fetchStats]);
+
+  const handleConfirmResources = async () => {
+    if (!user) return;
+    
+    try {
+      // Update last confirmed date
+      const { error } = await supabase
+        .from('profiles')
+        .update({ 
+          last_confirmed_at: new Date().toISOString()
+        })
+        .eq('id', user.id);
+
+      if (error) {
+        console.error('Error updating confirmation:', error);
+        return;
+      }
+
+      // Update local state
+      setLastConfirmedDate(new Date().toISOString());
+      setCanConfirm(false);
+      setShowConfirmModal(false);
+      
+      // Refresh stats to show updated score
+      await fetchStats();
+    } catch (error) {
+      console.error('Error confirming resources:', error);
+    }
+  };
 
   // --- FIX #1: Create a handler compatible with the new TopBar ---
   // This handler receives a view from the TopBar, and if it's a valid view
