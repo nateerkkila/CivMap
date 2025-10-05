@@ -70,7 +70,7 @@ body {
 .icon-medical { color: #ef4444; } /* red-500 */
 .icon-shelter { color: #16a34a; } /* green-600 */
 .icon-other { color: #6b7280; } /* gray-500 */
-
+.icon-threat { color: #dc2626; }
 
 @keyframes fadeIn {
   from { opacity: 0; transform: translateY(-10px); }
