@@ -67,10 +67,12 @@ export default function LoginForm() {
           alert('Check your email to confirm your account before signing in.');
         }
       }
-    } catch (err: any) {
-      setError(err.message || 'Something went wrong');
-    } finally {
-      setLoading(false);
+    } catch (err: unknown) {
+      if (err instanceof Error) {
+        setError(err.message);
+      } else {
+        setError('An unexpected error occurred');
+      }
     }
   };
 

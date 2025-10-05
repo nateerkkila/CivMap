@@ -7,9 +7,6 @@ export default function ManageResourcePage() {
   const params = useParams();
   const { id } = params;
 
-  // In a real implementation, you would use this ID to fetch
-  // the specific resource's data from localStorage or an API.
-
   return (
     <div className="flex flex-col items-center justify-center min-h-screen bg-gray-50">
       <div className="p-10 text-center bg-white rounded-lg shadow-xl">

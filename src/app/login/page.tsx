@@ -1,5 +1,5 @@
 import LoginForm from '@/components/LoginForm';
-import { Suspense } from 'react'; // <-- 1. Import Suspense
+import { Suspense } from 'react';
 
 // A simple component to show while the main form is loading
 function LoginFormSkeleton() {
@@ -27,8 +27,6 @@ export default function LoginPage() {
           </p>
         </div>
         
-        {/* --- THIS IS THE FIX --- */}
-        {/* 2. Wrap LoginForm in a Suspense boundary with a fallback UI */}
         <Suspense fallback={<LoginFormSkeleton />}>
           <LoginForm />
         </Suspense>
