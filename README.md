@@ -8,7 +8,7 @@ A platform for mapping and mobilizing civilian resources to enhance comprehensiv
 
 **Experience CivMap right now. The hosted version is available for the duration of the hackathon.**
 
-### [**https://your-live-demo-url.com**](https://your-live-demo-url.com) 👈
+### [**https://civ-map.vercel.app**](https://civ-map.vercel.app) 👈
 
 ---
 
