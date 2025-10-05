@@ -36,7 +36,7 @@ export default function CivilPage({ onSecurityLevelRefresh }: CivilPageProps) {
   });
   const [userResources, setUserResources] = useState<Item[]>([]);
   const [resourcesLoading, setResourcesLoading] = useState(true);
-  const { user, loading: authLoading } = useAuth();
+  const { user, profile, loading: authLoading } = useAuth();
   const router = useRouter();
 
   // Fetch user resources
