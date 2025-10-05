@@ -34,7 +34,8 @@ export default function AuthorityPage({ onSecurityLevelRefresh }: AuthorityPageP
   const [filters, setFilters] = useState<FilterState>({ category: '', distance: '', maxDistance: 50 });
   const [currentLocation, setCurrentLocation] = useState<{ lat: number; lng: number } | null>(null);
   const [locationError, setLocationError] = useState<string>('');
-  const { user, loading: authLoading } = useAuth();
+  
+   const { user, profile, loading: authLoading } = useAuth(); 
   const router = useRouter();
 
   useEffect(() => {
@@ -59,6 +60,7 @@ export default function AuthorityPage({ onSecurityLevelRefresh }: AuthorityPageP
         onSecurityLevelRefresh={onSecurityLevelRefresh}
         showConfirmButton={false}
         showAddResourceButton={false}
+        profile={profile}
       />
       <main className="flex-1 overflow-y-auto">
         <div className="max-w-7xl mx-auto sm:px-6 lg:px-8 py-6 h-full">
