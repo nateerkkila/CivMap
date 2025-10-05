@@ -1,6 +1,9 @@
 'use client';
 
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import { useAuth } from '@/context/AuthContext';
+import { supabase } from '@/lib/supabaseClient';
 import { Item } from '@/types';
 import { FaCar, FaBolt, FaFirstAid, FaHome, FaQuestionCircle, FaTruck, FaMedkit } from 'react-icons/fa';
 
@@ -53,18 +56,37 @@ const ResourceCard = ({ item }: { item: Item }) => {
   );
 };
 
-interface MyResourcesListProps {
-  resources: Item[];
-  loading: boolean;
-  onRefresh: () => void;
-}
+export default function MyResourcesList() {
+  const { user } = useAuth();
+  const [items, setItems] = useState<Item[]>([]);
+  const [loading, setLoading] = useState(true);
 
-export default function MyResourcesList({ resources, loading }: MyResourcesListProps) {
+  useEffect(() => {
+    const fetchItems = async () => {
+      if (!user) return;
+      setLoading(true);
+      const { data, error } = await supabase
+        .from('item')
+        .select(`*, item_category ( name )`)
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: false });
+
+      if (error) {
+        console.error('Error fetching user resources:', error);
+      } else {
+        setItems(data as Item[]);
+      }
+      setLoading(false);
+    };
+
+    fetchItems();
+  }, [user]);
+
   if (loading) {
     return <div className="py-8 text-center text-gray-500">Loading your resources...</div>;
   }
 
-  if (resources.length === 0) {
+  if (items.length === 0) {
     return (
       <div className="py-8 text-center text-gray-500 bg-gray-50 rounded-lg">
         <p>You have not registered any resources yet.</p>
@@ -75,7 +97,7 @@ export default function MyResourcesList({ resources, loading }: MyResourcesListP
 
   return (
     <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-      {resources.map((item) => (
+      {items.map((item) => (
         <ResourceCard key={item.id} item={item} />
       ))}
     </div>
