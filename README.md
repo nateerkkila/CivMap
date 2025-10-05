@@ -1,6 +1,6 @@
 # CivMap - Civilian Resource Mapping
 
-A platform for mapping and mobilizing civilian resources to enhance comprehensive security during a crisis. Built for the [Hackathon Name] hackathon.
+A platform for mapping and mobilizing civilian resources to enhance comprehensive security during a crisis. Built for the Junction hackathon.
 
 ---
 
