@@ -9,6 +9,7 @@ import ScoreSystem from '@/components/ScoreSystem';
 import TopBar from '@/components/TopBar';
 import { useAuth } from '@/context/AuthContext';
 import { supabase } from '@/lib/supabaseClient';
+import { Item } from '@/types';
 
 const ResourceMap = dynamic(() => import('@/components/ResourceMap'), {
   ssr: false,
@@ -33,8 +34,34 @@ export default function CivilPage({ onSecurityLevelRefresh }: CivilPageProps) {
     updates: 0,
     totalScore: 0
   });
+  const [userResources, setUserResources] = useState<Item[]>([]);
+  const [resourcesLoading, setResourcesLoading] = useState(true);
   const { user, loading: authLoading } = useAuth();
   const router = useRouter();
+
+  // Fetch user resources
+  const fetchUserResources = useCallback(async () => {
+    if (!user) return;
+    
+    try {
+      setResourcesLoading(true);
+      const { data, error } = await supabase
+        .from('item')
+        .select(`*, item_category ( name )`)
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: false });
+
+      if (error) {
+        console.error('Error fetching user resources:', error);
+      } else {
+        setUserResources(data as Item[]);
+      }
+    } catch (error) {
+      console.error('Error fetching user resources:', error);
+    } finally {
+      setResourcesLoading(false);
+    }
+  }, [user]);
 
   // Fetch user statistics
   const fetchStats = useCallback(async () => {
@@ -76,12 +103,13 @@ export default function CivilPage({ onSecurityLevelRefresh }: CivilPageProps) {
     }
   }, [user]);
 
-  // Fetch stats when user changes
+  // Fetch data when user changes
   useEffect(() => {
     if (user && !authLoading) {
       fetchStats();
+      fetchUserResources();
     }
-  }, [user, authLoading, fetchStats]);
+  }, [user, authLoading, fetchStats, fetchUserResources]);
 
   // Redirect if not authenticated
   useEffect(() => {
@@ -89,13 +117,6 @@ export default function CivilPage({ onSecurityLevelRefresh }: CivilPageProps) {
       router.push('/login');
     }
   }, [user, authLoading, router]);
-
-  // Refresh stats when component mounts
-  useEffect(() => {
-    if (user) {
-      fetchStats();
-    }
-  }, [user, fetchStats]);
 
   const handleConfirmResources = async () => {
     if (!user) return;
@@ -119,8 +140,9 @@ export default function CivilPage({ onSecurityLevelRefresh }: CivilPageProps) {
       setCanConfirm(false);
       setShowConfirmModal(false);
       
-      // Refresh stats to show updated score
+      // Refresh stats and resources to show updated data
       await fetchStats();
+      await fetchUserResources();
     } catch (error) {
       console.error('Error confirming resources:', error);
     }
@@ -161,7 +183,11 @@ export default function CivilPage({ onSecurityLevelRefresh }: CivilPageProps) {
         <div className="max-w-7xl mx-auto sm:px-6 lg:px-8 py-6 h-full">
            <ScoreSystem stats={stats} />
           {activeView === 'resources' ? (
-            <MyResourcesList />
+            <MyResourcesList 
+              resources={userResources} 
+              loading={resourcesLoading}
+              onRefresh={() => {}}
+            />
           ) : (
             <div className="w-full h-full rounded-lg overflow-hidden shadow-md">
               {/* --- FIX #3: Pass the default props to ResourceMap --- */}
