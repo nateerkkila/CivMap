@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react'; 
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import dynamic from 'next/dynamic';
@@ -66,9 +66,9 @@ export default function RegisterResourceForm() {
     fetchCategories();
   }, []);
 
-  const handleLocationChange = (lat: number, lng: number) => {
+  const handleLocationChange = useCallback((lat: number, lng: number) => {
     setCoords({ lat, lng });
-  };
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
