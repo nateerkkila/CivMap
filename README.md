@@ -6,12 +6,11 @@ A platform for mapping and mobilizing civilian resources to enhance comprehensiv
 
 ## 🚀 Live Demo is Running!
 
-**Experience CivMap right now. The hosted version is available for the duration of the hackathon.**
+**Experience CivMap right now. The hosted version is available for the duration of the hackathon. DESKTOP DESIGNED - mobile to come.**
 
 ### [**https://civ-map.vercel.app**](https://civ-map.vercel.app) 👈
 
 **PLEASE NOTE:** If you experience issues with 'loading' or 'authenticating', please try directly using /login and /dashboard URLS. During the app if experience loading issues, try refreshing.
-
 ---
 
 ## The Concept: Kokonaisturvallisuus (Comprehensive Security)
